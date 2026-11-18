@@ -1,0 +1,6 @@
+/output/
+/settings.local.json
+*.zip
+__pycache__/
+*.pyc
+/references/roster.json
