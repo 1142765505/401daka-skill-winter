@@ -69,7 +69,7 @@ def plan(command, has_input=False, present=None, uncertain=None):
             roster=json.loads((ROOT/"references/private/roster.json").read_text(encoding="utf-8"))
             scale_constraints={str(person["id"]):person["scale_constraints"] for person in roster["401"]["people"] if person["id"] in subjects}
     return {"room": room, "mode": "edit" if has_input else "reconstruct", "state": state,
-            "season": season, "identity_reference_set": "spring_autumn" if room=="401" else "legacy", "clothing_reference_set": season, "missing_season_references": missing, "seat_constraints": seat_constraints, "scale_constraints": scale_constraints, "requested": requested, "present": p, "uncertain": u, "skipped": skipped,
+            "season": season, "identity_reference_set": "canonical" if room=="401" else "legacy", "clothing_reference_set": season, "missing_season_references": missing, "seat_constraints": seat_constraints, "scale_constraints": scale_constraints, "requested": requested, "present": p, "uncertain": u, "skipped": skipped,
             "to_add": additions if state in ("ready", "noop") else [],
             "final_numbered_people": sorted(set(p or []) | set(requested)) if has_input and state == "ready" else (p if state == "noop" else requested if not has_input else None),
             "preserve_unrequested_existing_people": has_input,

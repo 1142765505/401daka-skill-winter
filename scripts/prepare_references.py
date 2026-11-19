@@ -22,7 +22,7 @@ def prepare(room, selected, out, season=None):
         group=selected[start:start+5];board=Image.new("RGB",(320*len(group),400),"white");draw=ImageDraw.Draw(board)
         for i,ident in enumerate(group):
             with Image.open(identity_root/(str(ident)+".png")) as im:thumb=ImageOps.contain(im.convert("RGB"),(300,350))
-            board.paste(thumb,(i*320+(320-thumb.width)//2,42));draw.text((i*320+12,12),f"ROOM {room} / PERSON {ident} / IDENTITY ONLY - LEGACY",fill="black")
+            board.paste(thumb,(i*320+(320-thumb.width)//2,42));draw.text((i*320+12,12),f"ROOM {room} / PERSON {ident} / IDENTITY ONLY - CANONICAL",fill="black")
         dest=out/(room+"-"+active+"-identity-board-"+str(start//5+1)+".png");board.save(dest);result.append(str(dest.resolve()))
     roster=json.loads((ROOT/"references/private/roster.json").read_text(encoding="utf-8"))
     extra=[]
@@ -38,18 +38,18 @@ def prepare(room, selected, out, season=None):
         for i,(ident,index,path) in enumerate(group):
             with Image.open(path) as im:thumb=ImageOps.contain(im.convert("RGB"),(300,350))
             board.paste(thumb,(i*320+(320-thumb.width)//2,42))
-            draw.text((i*320+12,12),f"PERSON {ident} / IDENTITY ONLY - LEGACY / VIEW {index+1}",fill="black")
+            draw.text((i*320+12,12),f"PERSON {ident} / IDENTITY ONLY - CANONICAL / VIEW {index+1}",fill="black")
         dest=out/(room+"-"+active+"-identity-details-"+str(start//5+1)+".png")
         board.save(dest);result.append(str(dest.resolve()))
-    if active=="winter":
+    if any(refs[ident].get("clothing_box") for ident in selected):
         clothed=[ident for ident in selected if refs[ident].get("clothing_box")]
         for start in range(0,len(clothed),5):
             group=clothed[start:start+5];board=Image.new("RGB",(320*len(group),400),"white");draw=ImageDraw.Draw(board)
             for i,ident in enumerate(group):
-                path=ROOT/"references/private/clothing/401/winter"/(str(ident)+".png")
+                path=ROOT/"references/private/clothing"/room/active/(str(ident)+".png")
                 with Image.open(path) as im:thumb=ImageOps.contain(im.convert("RGB"),(300,350))
-                board.paste(thumb,(i*320+(320-thumb.width)//2,42));draw.text((i*320+8,8),f"WINTER CLOTHING ONLY / PERSON {ident} / NO FACE",fill="black")
-            dest=out/(room+"-winter-clothing-"+str(start//5+1)+".png");board.save(dest);result.append(str(dest.resolve()))
+                board.paste(thumb,(i*320+(320-thumb.width)//2,42));draw.text((i*320+8,8),f"{active.upper()} CLOTHING ONLY / PERSON {ident} / NO FACE",fill="black")
+            dest=out/(room+"-"+active+"-clothing-"+str(start//5+1)+".png");board.save(dest);result.append(str(dest.resolve()))
     return result
 
 if __name__=="__main__":

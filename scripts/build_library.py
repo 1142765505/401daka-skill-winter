@@ -44,6 +44,29 @@ def build(root=ROOT):
                     if len(box)!=4 or not 0<=box[0]<box[2]<=1 or not 0<=box[1]<box[3]<=1:
                         raise ValueError("无效补充身份裁图范围")
                     im.crop(tuple(round(v*(im.width if i%2==0 else im.height)) for i,v in enumerate(box))).save(target/(str(person["id"])+"-ref-"+str(index)+".png"))
+    # Canonical identity atlas also reflects user-confirmed updates.
+    for room, data in roster.items():
+        target = private / "identities" / room
+        rows = (len(data["people"]) + 4) // 5
+        atlas = Image.new("RGB", (1600, rows * 400), "white")
+        draw = ImageDraw.Draw(atlas)
+        for i, person in enumerate(data["people"]):
+            x = i % 5 * 320; y = i // 5 * 400
+            draw.text((x + 8, y + 8), f"{room} CANONICAL ID / PERSON {person['id']}", fill="black")
+            with Image.open(target / (str(person["id"]) + ".png")) as im:
+                thumb = ImageOps.contain(im.convert("RGB"), (300, 350))
+            atlas.paste(thumb, (x + (320 - thumb.width) // 2, y + 35))
+            for season, ref in person.get("seasonal_references", {}).items():
+                if season == "winter" or not ref.get("clothing_box"):
+                    continue
+                box = ref["clothing_box"]
+                if len(box) != 4 or not 0 <= box[0] < box[2] <= 1 or not 0 <= box[1] < box[3] <= 1:
+                    raise ValueError("无效季节服装裁图范围")
+                destination = private / "clothing" / room / season
+                destination.mkdir(parents=True, exist_ok=True)
+                with Image.open(root / ref["clothing_source"]) as im:
+                    im.crop(tuple(round(v * (im.width if j % 2 == 0 else im.height)) for j, v in enumerate(box))).save(destination / (str(person["id"]) + ".png"))
+        atlas.save(private / (room + "-identity-atlas.jpg"), quality=93)
     catalog.extend(build_winter(root, roster))
     (private/"catalog.json").write_text(json.dumps(catalog,ensure_ascii=False,indent=2),encoding="utf-8")
     return {"photo_count":len(catalog),"rooms":{room:sum(item["room"]==room for item in catalog) for room in roster},"method":"reference-library; no model training"}
@@ -73,7 +96,7 @@ def build_winter(root, roster):
         ref=person["seasonal_references"]["winter"]
         legacy=person["seasonal_references"]["spring_autumn"]
         ident=str(person["id"])
-        # Compatibility aliases contain ONLY canonical old identity pixels.
+        # Compatibility aliases contain ONLY canonical identity pixels, including confirmed updates.
         expected.add(ident+".png")
         crop(legacy["identity_source"],legacy["identity_box"],target/(ident+".png"))
         if ref.get("clothing_box"):
@@ -87,7 +110,7 @@ def build_winter(root, roster):
     atlas=Image.new("RGB",(1600,800),"white");draw=ImageDraw.Draw(atlas)
     for i,person in enumerate(roster["401"]["people"]):
         x=i%5*320;y=i//5*400;f=target/(str(person["id"])+".png")
-        draw.text((x+8,y+8),"401 LEGACY IDENTITY / PERSON "+str(person["id"]),fill="black")
+        draw.text((x+8,y+8),"401 CANONICAL IDENTITY / PERSON "+str(person["id"]),fill="black")
         with Image.open(f) as im:thumb=ImageOps.contain(im.convert("RGB"),(300,350))
         atlas.paste(thumb,(x+(320-thumb.width)//2,y+35))
     atlas.save(private/"401-winter-identity-atlas.jpg",quality=93)

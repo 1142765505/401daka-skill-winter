@@ -13,10 +13,15 @@ class ReferenceTests(unittest.TestCase):
     def test_selected_identity_supplement(self):
         with tempfile.TemporaryDirectory() as tmp:
             files=prepare("401",[1,4],Path(tmp)/"selected",season="spring_autumn")
-            self.assertEqual(len(files),2)
-            for file in files:
-                with Image.open(file) as im:
-                    self.assertEqual(im.size,(640,400))
+            self.assertEqual(len(files),3)
+            identity=[Path(f) for f in files if "identity" in Path(f).name]
+            clothing=[Path(f) for f in files if "clothing" in Path(f).name]
+            self.assertEqual(len(identity),2)
+            self.assertEqual(len(clothing),1)
+            with Image.open(identity[0]) as im:self.assertEqual(im.size,(640,400))
+            # One supplemental view for 1, three current views for 4.
+            with Image.open(identity[1]) as im:self.assertEqual(im.size,(1280,400))
+            with Image.open(clothing[0]) as im:self.assertEqual(im.size,(320,400))
             # Other people must not accidentally inherit the 1/4 supplemental views.
             files=prepare("401",[2],Path(tmp)/"other",season="spring_autumn")
             self.assertEqual(len(files),1)
